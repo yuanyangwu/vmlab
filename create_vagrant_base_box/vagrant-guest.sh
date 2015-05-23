@@ -58,4 +58,5 @@ rm -fr /tmp/*
 EOF
 
 sudo sh ./vagrant-privillege.sh
+sudo shutdown -h now
 
