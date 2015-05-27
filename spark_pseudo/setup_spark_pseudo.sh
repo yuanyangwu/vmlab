@@ -6,7 +6,7 @@ grep spark /etc/passwd
 if [ "$?" != "0" ]; then
   echo 'Adding user "spark"'
   sudo groupadd -g 2000 spark
-  sudo useradd -u 2000 -g spark spark
+  sudo useradd -m -s /bin/bash -u 2000 -g spark spark
   echo "spark:spark" | sudo chpasswd
   echo 'spark ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers
 fi
@@ -41,12 +41,12 @@ if [ ! -d /app/hadoop-2.6.0 ]; then
   sudo tar xzf /installer/hadoop-2.6.0.tar.gz -C /app
   sudo cat << EOF >> /etc/profile
 
-export HADOOP_FREFIX=/app/hadoop-2.6.0
-export HADOOP_COMMON_HOME=\${HADOOP_FREFIX}
-export HADOOP_HDFS_HOME=\${HADOOP_FREFIX}
-export HADOOP_MAPRED_HOME=\${HADOOP_FREFIX}
-export YARN_HOME=\${HADOOP_FREFIX}
-export PATH=\${HADOOP_FREFIX}/bin:\${HADOOP_FREFIX}/sbin:\${PATH}
+export HADOOP_PREFIX=/app/hadoop-2.6.0
+export HADOOP_COMMON_HOME=\${HADOOP_PREFIX}
+export HADOOP_HDFS_HOME=\${HADOOP_PREFIX}
+export HADOOP_MAPRED_HOME=\${HADOOP_PREFIX}
+export YARN_HOME=\${HADOOP_PREFIX}
+export PATH=\${HADOOP_PREFIX}/bin:\${HADOOP_PREFIX}/sbin:\${PATH}
 EOF
 
   sudo mkdir -p /data/hdfs/data
