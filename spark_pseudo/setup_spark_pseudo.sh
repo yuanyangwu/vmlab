@@ -2,13 +2,77 @@
 
 sudo apt-get install -y python-pip python-dev vim
 
-grep spark /etc/passwd
+if [ ! -e /etc/hosts.orig ]; then
+  echo "Assign hadoop1 IP in /etc/hosts"
+  sudo cp -a /etc/hosts /etc/hosts.orig
+  sudo grep -v hadoop1 /etc/hosts.orig > /etc/hosts
+  sudo echo "192.168.33.10 hadoop1" >> /etc/hosts
+fi
+
+exist=`grep spark /etc/passwd`
 if [ "$?" != "0" ]; then
   echo 'Adding user "spark"'
   sudo groupadd -g 2000 spark
   sudo useradd -m -s /bin/bash -u 2000 -g spark spark
   echo "spark:spark" | sudo chpasswd
   echo 'spark ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers
+fi
+
+if [ ! -e /etc/security/limits.conf.orig ]; then
+  echo "Increasing open file handle limit"
+  sudo cp -a /etc/security/limits.conf /etc/security/limits.conf.orig
+  sudo cat << EOF >> /etc/security/limits.conf
+*               soft    nofile            32768
+*               hard    nofile            65536
+EOF
+fi
+
+if [ ! -e /home/spark/.ssh/id_rsa ]; then
+  echo 'Adding SSH key to "spark" user'
+
+  sudo mkdir /home/spark/.ssh
+
+  sudo cat << EOF > /home/spark/.ssh/id_rsa
+-----BEGIN RSA PRIVATE KEY-----
+MIIEpAIBAAKCAQEArMAq9o0hS7mKC7BNB2VQ323USYrebq6QZle+TsKlieQJb44O
+Ff0/nXeQ2vapNv1UZXf/cYFHX0cXRAZk9nPVjrTdsRp+yBFwF1p8k3dResYDyT1r
+8jGdP7OuZvLzs9h0tY67L0153A609XYfi0WJ/Qebporp40Wu9XNhCTu284ZHNM2i
+DawByaL2dKIxX8PeF//8flmAFQOfJV3q0KqQv89IcussibdooPpInAUE9OktQb8Y
+EjNTqraG95LtgRk4/qvnumQ6vq6LuB7hqSL+drXIOWeLOGNIeZA8CifI4dtCpbgR
+fQZhFl5VHtpPHIZqpWDaxI5BWq1yW0LV1RCtUQIDAQABAoIBAQCYrZbLJVyiEq+h
+OQY7XR4m+mi/Ps7sP7g725zE+19XCYYVZBWq9ZJ916jc/Vf809T9gRrw9HNiD/DO
+HGCrOSEr6UpuNp6KsG7DFSQ5KSGIQu4hs/ltqs/x9xpSvrMI5mvv8uAZJH5pMU5a
+CzZB3wnf6hN1FB020uWY5YqDoJVHkJclZHE5Pn+NOmg9JJRdgNuZ/C5Bfyw4d/LG
+qww2Xvml4V6MNwabFuxLfSz/cc2YkWvQiVNRo+TzMKX+r45SQHePLCvPUbxhdq9N
+HzbiwAtK4qBafs3xANBNQ9L2xPufVQwSSxAZj3+njkPLPujn0ZVulDtOhQ/okl7b
+TrtqA+LhAoGBAOKmgmanO2pOz/6Y2tB8ulxLTvHDxB6xtK9gEty3nWruy+nt+MNa
+ZhD0EPQo06hyyQ5ca98Q0dPs1hkscMrGM3tEdw8M+0idYTO9WEJ5ZNeoFLswxooU
+q6ZR0SPv2AzYSwuEfbm7kvYJz0hGG28BQU6sYIsKsgJcww0SbfA11CldAoGBAMMe
+38bTmYYX/7vQX03/HV+PgXU8sbrYUNKfzAKgdUAH0n5ugWB8fQnpquB5LHEn2i5b
+McZV4YA0lXA6L4XkYu00rbRFFGOEfnYUL+Qd6xUbPb4ndLU6GrfY07u6R5d1TgKk
+17gTn9cJR5qE4eWQ69M21/o37WJH2QUPNXuSUPCFAoGAWwG2/JcLsW0B8V3ZBrv+
+bI7EnSkZN6XtQjoWeM+1grlt4XlvWKmUsBwALrmx+0JT3tNXcRMk3a6MbUE97P3W
+sBlWoRF6WLbwz8CojtCFoF5aLKuyHMGeBsN1cbOdkdLLl01U2l4p7WcU9xVHcLQV
+UAzBGzNpNK+glkAfKsPCc/UCgYEAvR2PhwZQJsfb9g1gUhiSP6y3rQnGuXIv4/U9
+ps4e1pC+VAyHGR2Pk6wHEspfaM1XitaYx8M1bS2KKdw7c2qI95+3PKI3wL0KVSf7
+wv28fBiLH2Lem0hV3RsrHSjPet0XXzimXKOoqKM1424oBHkSGQVvD/Zk/nzkuyKi
+k8Kc8IECgYBtF5g1fJoY+HqxTi8ZqVEZOMKoTAi+HsWjBOONt3U2DjOuUllOow3d
+KKeG/jwLiECrJ7cMzBzI2RDU2BUvY1WGbKIAH+ELbUxSd41PBDnAhEzb7eWqBRoR
+O0FVi1u6/TcztuhVsIbbSIz9VU+/2EETj1NLF8j0GzyrQRFuUfljjg==
+-----END RSA PRIVATE KEY-----
+EOF
+  sudo chmod 0600 /home/spark/.ssh/id_rsa
+
+  sudo cat << EOF > /home/spark/.ssh/id_rsa.pub
+ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCswCr2jSFLuYoLsE0HZVDfbdRJit5urpBmV75OwqWJ5Alvjg4V/T+dd5Da9qk2/VRld/9xgUdfRxdEBmT2c9WOtN2xGn7IEXAXWnyTd1F6xgPJPWvyMZ0/s65m8vOz2HS1jrsvTXncDrT1dh+LRYn9B5umiunjRa71c2EJO7bzhkc0zaINrAHJovZ0ojFfw94X//x+WYAVA58lXerQqpC/z0hy6yyJt2ig+kicBQT06S1BvxgSM1Oqtob3ku2BGTj+q+e6ZDq+rou4HuGpIv52tcg5Z4s4Y0h5kDwKJ8jh20KluBF9BmEWXlUe2k8chmqlYNrEjkFarXJbQtXVEK1R spark@hadoop1
+EOF
+  sudo chmod 0644 /home/spark/.ssh/id_rsa.pub
+
+  sudo cp /home/spark/.ssh/id_rsa.pub /home/spark/.ssh/authorized_keys
+  sudo chmod 0600 /home/spark/.ssh/authorized_keys
+
+  sudo chmod 0700 /home/spark/.ssh
+  sudo chown spark:spark -R /home/spark/.ssh/
 fi
 
 sudo mkdir -p /app
@@ -190,8 +254,26 @@ EOF
 </property>
 </configuration>
 EOF
+
+  if [ ! -e /app/hadoop-2.6.0/etc/hadoop/hadoop-env.sh.orig ]; then
+    sudo mv /app/hadoop-2.6.0/etc/hadoop/hadoop-env.sh /app/hadoop-2.6.0/etc/hadoop/hadoop-env.sh.orig
+    sudo sed 's/\${JAVA_HOME}/\/app\/jdk1.8.0_45/' /app/hadoop-2.6.0/etc/hadoop/hadoop-env.sh.orig > /app/hadoop-2.6.0/etc/hadoop/hadoop-env.sh
+    sudo mv /app/hadoop-2.6.0/etc/hadoop/yarn-env.sh /app/hadoop-2.6.0/etc/hadoop/yarn-env.sh.orig
+    sudo sed 's/\${JAVA_HOME}/\/app\/jdk1.8.0_45/' /app/hadoop-2.6.0/etc/hadoop/yarn-env.sh.orig > /app/hadoop-2.6.0/etc/hadoop/yarn-env.sh
+  fi
+
+  sudo cat << EOF > /app/hadoop-2.6.0/etc/hadoop/slaves
+hadoop1
+EOF
+
+
   sudo chown spark:spark -R /app/hadoop-2.6.0
   sudo chown spark:spark -R /data/hdfs
+
+  cd /app/hadoop-2.6.0
+
+  echo "Formatting name node"
+  bin/hdfs name -format
 fi
 
 if [ ! -d /app/spark-1.3.1 ]; then
@@ -199,9 +281,64 @@ if [ ! -d /app/spark-1.3.1 ]; then
   sudo tar xzf /installer/spark-1.3.1-bin-hadoop2.6.tgz -C /app
   sudo mv /app/spark-1.3.1-bin-hadoop2.6 /app/spark-1.3.1
   sudo chown spark:spark -R /app/spark-1.3.1
-  sudo cat << EOF >> /etc/profile
-
+  sudo cat << EOF >> /app/spark-1.3.1/conf/slaves
+hadoop1
 EOF
+
+  sudo cat << EOF >> /app/spark-1.3.1/conf/spark-env.sh
+export JAVA_HOME=/app/jdk1.8.0_45
+export SPARK_LOCAL_IP=192.168.33.10
+export SPARK_MASTER_IP=hadoop1
+export SPARK_MASTER_PORT=7077
+export SPARK_WORKER_CORES=2
+export SPARK_WORKER_INSTANCES=1
+export SPARK_WORKER_MEMORY=1g
+EOF
+
+  sudo chown spark:spark -R /app/spark-1.3.1
 fi
 
+if [ ! -e /home/spark/start_spark.sh ]; then
+  sudo cat << EOF > /home/spark/start_spark.sh
+#!/bin/sh
+
+echo "Start HDFS"
+cd /app/hadoop-2.6.0
+sbin/start-dfs.sh
+
+echo "Start Spark"
+cd /app/spark-1.3.1
+sbin/start-all.sh
+
+echo "Succeed!"
+EOF
+
+  sudo chown spark:spark /home/spark/start_spark.sh
+  sudo chmod 0744 /home/spark/start_spark.sh
+fi
+
+if [ ! -e /home/spark/stop.sh ]; then
+  sudo cat << EOF > /home/spark/stop_spark.sh
+#!/bin/sh
+
+echo "Stop Spark"
+cd /app/spark-1.3.1
+sbin/stop-all.sh
+
+echo "Stop HDFS"
+cd /app/hadoop-2.6.0
+sbin/stop-dfs.sh
+
+echo "Succeed!"
+EOF
+
+  sudo chown spark:spark /home/spark/stop_spark.sh
+  sudo chmod 0744 /home/spark/stop_spark.sh
+fi
+
+echo
+echo 'Install Hadoop/Spark completed!'
+echo 'You can'
+echo '  start Spark via "ssh spark@192.168.33.10 /home/spark/start_spark.sh'
+echo '  stop Spark via "ssh spark@192.168.33.10 /home/spark/stop_spark.sh'
 
