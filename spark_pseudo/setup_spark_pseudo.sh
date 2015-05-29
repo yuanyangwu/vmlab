@@ -1,12 +1,29 @@
 #!/bin/sh
 
+HADOOP_MASTER_HOSTNAME=hadoop1
+HADOOP_MASTER_IP=192.168.33.10
+NODE_CPUS=3
+NODE_MEMORY=2
+SPARK_WORKER_CORES=`expr ${NODE_CPUS} - 1`
+SPARK_WORKER_INSTANCES=${SPARK_WORKER_CORES}
+SPARK_WORKER_MEMORY=`expr ${NODE_MEMORY} - 1`
+JDK_INSTALLER=/installer/jdk-8u45-linux-x64.tar.gz
+JDK_INSTALL_DIR=/app/jdk1.8.0_45
+SCALA_INSTALLER=/installer/scala-2.10.5.tgz
+SCALA_INSTALL_DIR=/app/scala-2.10.5
+HADOOP_INSTALLER=/installer/hadoop-2.6.0.tar.gz
+HADOOP_INSTALL_DIR=/app/hadoop-2.6.0
+SPARK_INSTALLER=/installer/spark-1.3.1-bin-hadoop2.6.tgz
+SPARK_INSTALL_DIR=/app/spark-1.3.1
+
+
 sudo apt-get install -y python-pip python-dev vim
 
 if [ ! -e /etc/hosts.orig ]; then
-  echo "Assign hadoop1 IP in /etc/hosts"
+  echo "Assign ${HADOOP_MASTER_HOSTNAME} IP in /etc/hosts"
   sudo cp -a /etc/hosts /etc/hosts.orig
-  sudo grep -v hadoop1 /etc/hosts.orig > /etc/hosts
-  sudo echo "192.168.33.10 hadoop1" >> /etc/hosts
+  sudo grep -v ${HADOOP_MASTER_HOSTNAME} /etc/hosts.orig > /etc/hosts
+  sudo echo "${HADOOP_MASTER_IP} ${HADOOP_MASTER_HOSTNAME}" >> /etc/hosts
 fi
 
 exist=`grep spark /etc/passwd`
@@ -64,7 +81,7 @@ EOF
   sudo chmod 0600 /home/spark/.ssh/id_rsa
 
   sudo cat << EOF > /home/spark/.ssh/id_rsa.pub
-ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCswCr2jSFLuYoLsE0HZVDfbdRJit5urpBmV75OwqWJ5Alvjg4V/T+dd5Da9qk2/VRld/9xgUdfRxdEBmT2c9WOtN2xGn7IEXAXWnyTd1F6xgPJPWvyMZ0/s65m8vOz2HS1jrsvTXncDrT1dh+LRYn9B5umiunjRa71c2EJO7bzhkc0zaINrAHJovZ0ojFfw94X//x+WYAVA58lXerQqpC/z0hy6yyJt2ig+kicBQT06S1BvxgSM1Oqtob3ku2BGTj+q+e6ZDq+rou4HuGpIv52tcg5Z4s4Y0h5kDwKJ8jh20KluBF9BmEWXlUe2k8chmqlYNrEjkFarXJbQtXVEK1R spark@hadoop1
+ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCswCr2jSFLuYoLsE0HZVDfbdRJit5urpBmV75OwqWJ5Alvjg4V/T+dd5Da9qk2/VRld/9xgUdfRxdEBmT2c9WOtN2xGn7IEXAXWnyTd1F6xgPJPWvyMZ0/s65m8vOz2HS1jrsvTXncDrT1dh+LRYn9B5umiunjRa71c2EJO7bzhkc0zaINrAHJovZ0ojFfw94X//x+WYAVA58lXerQqpC/z0hy6yyJt2ig+kicBQT06S1BvxgSM1Oqtob3ku2BGTj+q+e6ZDq+rou4HuGpIv52tcg5Z4s4Y0h5kDwKJ8jh20KluBF9BmEWXlUe2k8chmqlYNrEjkFarXJbQtXVEK1R spark@${HADOOP_MASTER_HOSTNAME}
 EOF
   sudo chmod 0644 /home/spark/.ssh/id_rsa.pub
 
@@ -77,35 +94,35 @@ fi
 
 sudo mkdir -p /app
 
-if [ ! -d /app/jdk1.8.0_45 ]; then
+if [ ! -d ${JDK_INSTALL_DIR} ]; then
   echo "Installing JDK"
-  sudo tar xzf /installer/jdk-8u45-linux-x64.tar.gz -C /app
-  sudo chown root:root -R /app/jdk1.8.0_45
+  sudo tar xzf ${JDK_INSTALLER} -C /app
+  sudo chown root:root -R ${JDK_INSTALL_DIR}
   sudo cat << EOF >> /etc/profile
 
-export JAVA_HOME=/app/jdk1.8.0_45
+export JAVA_HOME=${JDK_INSTALL_DIR}
 export CLASSPATH=.:\${JAVA_HOME}/lib:\${JAVA_HOME}/lib/tools.jar
 export PATH=\${JAVA_HOME}/bin:\${PATH}
 EOF
 fi
 
-if [ ! -d /app/scala-2.10.5 ]; then
+if [ ! -d ${SCALA_INSTALL_DIR} ]; then
   echo "Installing Scala"
-  sudo tar xzf /installer/scala-2.10.5.tgz -C /app
-  sudo chown root:root -R /app/scala-2.10.5
+  sudo tar xzf ${SCALA_INSTALLER} -C /app
+  sudo chown root:root -R ${SCALA_INSTALL_DIR}
   sudo cat << EOF >> /etc/profile
 
-export SCALA_HOME=/app/scala-2.10.5
+export SCALA_HOME=${SCALA_INSTALL_DIR}
 export PATH=\${SCALA_HOME}/bin:\${PATH}
 EOF
 fi
 
-if [ ! -d /app/hadoop-2.6.0 ]; then
+if [ ! -d ${HADOOP_INSTALL_DIR} ]; then
   echo "Installing Hadoop"
-  sudo tar xzf /installer/hadoop-2.6.0.tar.gz -C /app
+  sudo tar xzf ${HADOOP_INSTALLER} -C /app
   sudo cat << EOF >> /etc/profile
 
-export HADOOP_PREFIX=/app/hadoop-2.6.0
+export HADOOP_PREFIX=${HADOOP_INSTALL_DIR}
 export HADOOP_COMMON_HOME=\${HADOOP_PREFIX}
 export HADOOP_HDFS_HOME=\${HADOOP_PREFIX}
 export HADOOP_MAPRED_HOME=\${HADOOP_PREFIX}
@@ -118,13 +135,13 @@ EOF
   sudo mkdir -p /data/hdfs/sysmapred
   sudo mkdir -p /data/hdfs/localmapred
 
-  sudo cat << EOF > /app/hadoop-2.6.0/etc/hadoop/core-site.xml
+  sudo cat << EOF > ${HADOOP_INSTALL_DIR}/etc/hadoop/core-site.xml
 <?xml version="1.0"?>
 <?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
 <configuration>
 <property>
 <name>fs.defaultFS</name>
-<value>hdfs://hadoop1:8000/</value>
+<value>hdfs://${HADOOP_MASTER_HOSTNAME}:8000/</value>
 </property>
 
 <property>
@@ -134,7 +151,7 @@ EOF
 </configuration>
 EOF
 
-  sudo cat << EOF > /app/hadoop-2.6.0/etc/hadoop/hdfs-site.xml
+  sudo cat << EOF > ${HADOOP_INSTALL_DIR}/etc/hadoop/hdfs-site.xml
 <?xml version="1.0"?>
 <?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
 <configuration>
@@ -165,23 +182,23 @@ EOF
 </configuration>
 EOF
 
-  sudo cat << EOF > /app/hadoop-2.6.0/etc/hadoop/yarn-site.xml
+  sudo cat << EOF > ${HADOOP_INSTALL_DIR}/etc/hadoop/yarn-site.xml
 <?xml version="1.0"?>
 <?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
 <configuration>
 <property>
 <name>yarn.resourcemanager.address</name>
-<value>hadoop1:8880</value>
+<value>${HADOOP_MASTER_HOSTNAME}:8880</value>
 </property>
 
 <property>
 <name>yarn.resourcemanager.scheduler.address</name>
-<value>hadoop1:8881</value>
+<value>${HADOOP_MASTER_HOSTNAME}:8881</value>
 </property>
 
 <property>
 <name>yarn.resourcemanager.resource-tracker.address</name>
-<value>hadoop1:8882</value>
+<value>${HADOOP_MASTER_HOSTNAME}:8882</value>
 </property>
 
 <property>
@@ -191,7 +208,7 @@ EOF
 </configuration>
 EOF
 
-  sudo cat << EOF > /app/hadoop-2.6.0/etc/hadoop/mapred-site.xml
+  sudo cat << EOF > ${HADOOP_INSTALL_DIR}/etc/hadoop/mapred-site.xml
 <?xml version="1.0"?>
 <?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
 <configuration>
@@ -202,7 +219,7 @@ EOF
 
 <property>
 <name>mapreduce.job.tracker</name>
-<value>hdfs://hadoop1:8001</value>
+<value>hdfs://${HADOOP_MASTER_HOSTNAME}:8001</value>
 <final>true</final>
 </property>
 
@@ -255,47 +272,47 @@ EOF
 </configuration>
 EOF
 
-  if [ ! -e /app/hadoop-2.6.0/etc/hadoop/hadoop-env.sh.orig ]; then
-    sudo mv /app/hadoop-2.6.0/etc/hadoop/hadoop-env.sh /app/hadoop-2.6.0/etc/hadoop/hadoop-env.sh.orig
-    sudo sed 's/\${JAVA_HOME}/\/app\/jdk1.8.0_45/' /app/hadoop-2.6.0/etc/hadoop/hadoop-env.sh.orig > /app/hadoop-2.6.0/etc/hadoop/hadoop-env.sh
-    sudo mv /app/hadoop-2.6.0/etc/hadoop/yarn-env.sh /app/hadoop-2.6.0/etc/hadoop/yarn-env.sh.orig
-    sudo sed 's/\${JAVA_HOME}/\/app\/jdk1.8.0_45/' /app/hadoop-2.6.0/etc/hadoop/yarn-env.sh.orig > /app/hadoop-2.6.0/etc/hadoop/yarn-env.sh
+  if [ ! -e ${HADOOP_INSTALL_DIR}/etc/hadoop/hadoop-env.sh.orig ]; then
+    sudo mv ${HADOOP_INSTALL_DIR}/etc/hadoop/hadoop-env.sh ${HADOOP_INSTALL_DIR}/etc/hadoop/hadoop-env.sh.orig
+    sudo sed "s;\${JAVA_HOME};${JDK_INSTALL_DIR};g" ${HADOOP_INSTALL_DIR}/etc/hadoop/hadoop-env.sh.orig > ${HADOOP_INSTALL_DIR}/etc/hadoop/hadoop-env.sh
+    sudo mv ${HADOOP_INSTALL_DIR}/etc/hadoop/yarn-env.sh ${HADOOP_INSTALL_DIR}/etc/hadoop/yarn-env.sh.orig
+    sudo sed "s;\${JAVA_HOME};${JDK_INSTALL_DIR};g" ${HADOOP_INSTALL_DIR}/etc/hadoop/yarn-env.sh.orig > ${HADOOP_INSTALL_DIR}/etc/hadoop/yarn-env.sh
   fi
 
-  sudo cat << EOF > /app/hadoop-2.6.0/etc/hadoop/slaves
-hadoop1
+  sudo cat << EOF > ${HADOOP_INSTALL_DIR}/etc/hadoop/slaves
+${HADOOP_MASTER_HOSTNAME}
 EOF
 
 
-  sudo chown spark:spark -R /app/hadoop-2.6.0
+  sudo chown spark:spark -R ${HADOOP_INSTALL_DIR}
   sudo chown spark:spark -R /data/hdfs
 
-  cd /app/hadoop-2.6.0
+  cd ${HADOOP_INSTALL_DIR}
 
   echo "Formatting name node"
   bin/hdfs name -format
 fi
 
-if [ ! -d /app/spark-1.3.1 ]; then
+if [ ! -d ${SPARK_INSTALL_DIR} ]; then
   echo "Installing Spark"
-  sudo tar xzf /installer/spark-1.3.1-bin-hadoop2.6.tgz -C /app
-  sudo mv /app/spark-1.3.1-bin-hadoop2.6 /app/spark-1.3.1
-  sudo chown spark:spark -R /app/spark-1.3.1
-  sudo cat << EOF >> /app/spark-1.3.1/conf/slaves
-hadoop1
+  sudo tar xzf ${SPARK_INSTALLER} -C /app
+  sudo mv ${SPARK_INSTALL_DIR}-bin-hadoop2.6 ${SPARK_INSTALL_DIR}
+  sudo chown spark:spark -R ${SPARK_INSTALL_DIR}
+  sudo cat << EOF >> ${SPARK_INSTALL_DIR}/conf/slaves
+${HADOOP_MASTER_HOSTNAME}
 EOF
 
-  sudo cat << EOF >> /app/spark-1.3.1/conf/spark-env.sh
-export JAVA_HOME=/app/jdk1.8.0_45
-export SPARK_LOCAL_IP=192.168.33.10
-export SPARK_MASTER_IP=hadoop1
+  sudo cat << EOF >> ${SPARK_INSTALL_DIR}/conf/spark-env.sh
+export JAVA_HOME=${JDK_INSTALL_DIR}
+export SPARK_LOCAL_IP=${HADOOP_MASTER_IP}
+export SPARK_MASTER_IP=${HADOOP_MASTER_HOSTNAME}
 export SPARK_MASTER_PORT=7077
-export SPARK_WORKER_CORES=2
-export SPARK_WORKER_INSTANCES=1
-export SPARK_WORKER_MEMORY=1g
+export SPARK_WORKER_CORES=${SPARK_WORKER_CORES}
+export SPARK_WORKER_INSTANCES=${SPARK_WORKER_INSTANCES}
+export SPARK_WORKER_MEMORY=${SPARK_WORKER_MEMORY}g
 EOF
 
-  sudo chown spark:spark -R /app/spark-1.3.1
+  sudo chown spark:spark -R ${SPARK_INSTALL_DIR}
 fi
 
 if [ ! -e /home/spark/start_spark.sh ]; then
@@ -303,11 +320,11 @@ if [ ! -e /home/spark/start_spark.sh ]; then
 #!/bin/sh
 
 echo "Start HDFS"
-cd /app/hadoop-2.6.0
+cd ${HADOOP_INSTALL_DIR}
 sbin/start-dfs.sh
 
 echo "Start Spark"
-cd /app/spark-1.3.1
+cd ${SPARK_INSTALL_DIR}
 sbin/start-all.sh
 
 echo "Succeed!"
@@ -322,11 +339,11 @@ if [ ! -e /home/spark/stop.sh ]; then
 #!/bin/sh
 
 echo "Stop Spark"
-cd /app/spark-1.3.1
+cd ${SPARK_INSTALL_DIR}
 sbin/stop-all.sh
 
 echo "Stop HDFS"
-cd /app/hadoop-2.6.0
+cd ${HADOOP_INSTALL_DIR}
 sbin/stop-dfs.sh
 
 echo "Succeed!"
@@ -339,6 +356,6 @@ fi
 echo
 echo 'Install Hadoop/Spark completed!'
 echo 'You can'
-echo '  start Spark via "ssh spark@192.168.33.10 /home/spark/start_spark.sh'
-echo '  stop Spark via "ssh spark@192.168.33.10 /home/spark/stop_spark.sh'
+echo "  start Spark via \"ssh spark@${HADOOP_MASTER_IP}\" /home/spark/start_spark.sh"
+echo "  stop Spark via \"ssh spark@${HADOOP_MASTER_IP}\" /home/spark/stop_spark.sh"
 
