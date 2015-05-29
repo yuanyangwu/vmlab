@@ -22,8 +22,9 @@ sudo apt-get install -y python-pip python-dev vim
 if [ ! -e /etc/hosts.orig ]; then
   echo "Assign ${HADOOP_MASTER_HOSTNAME} IP in /etc/hosts"
   sudo cp -a /etc/hosts /etc/hosts.orig
-  sudo grep -v ${HADOOP_MASTER_HOSTNAME} /etc/hosts.orig > /etc/hosts
-  sudo echo "${HADOOP_MASTER_IP} ${HADOOP_MASTER_HOSTNAME}" >> /etc/hosts
+  sudo cp -a /etc/hosts /etc/hosts.tmp
+  sudo sed "s;^.*${HADOOP_MASTER_HOSTNAME}.*$;${HADOOP_MASTER_IP} ${HADOOP_MASTER_HOSTNAME};" /etc/hosts > /etc/hosts.tmp
+  sudo mv /etc/hosts.tmp /etc/hosts
 fi
 
 exist=`grep spark /etc/passwd`
@@ -286,11 +287,6 @@ EOF
 
   sudo chown spark:spark -R ${HADOOP_INSTALL_DIR}
   sudo chown spark:spark -R /data/hdfs
-
-  cd ${HADOOP_INSTALL_DIR}
-
-  echo "Formatting name node"
-  bin/hdfs name -format
 fi
 
 if [ ! -d ${SPARK_INSTALL_DIR} ]; then
@@ -319,11 +315,18 @@ if [ ! -e /home/spark/start_spark.sh ]; then
   sudo cat << EOF > /home/spark/start_spark.sh
 #!/bin/sh
 
-echo "Start HDFS"
+if [ ! -e /home/spark/.hdfs_namenode_format ]; then
+  echo "Formatting HDFS name node"
+  cd ${HADOOP_INSTALL_DIR}
+  bin/hdfs namenode -format
+  touch /home/spark/.hdfs_namenode_format
+fi
+
+echo "Starting HDFS"
 cd ${HADOOP_INSTALL_DIR}
 sbin/start-dfs.sh
 
-echo "Start Spark"
+echo "Starting Spark"
 cd ${SPARK_INSTALL_DIR}
 sbin/start-all.sh
 
@@ -338,11 +341,11 @@ if [ ! -e /home/spark/stop.sh ]; then
   sudo cat << EOF > /home/spark/stop_spark.sh
 #!/bin/sh
 
-echo "Stop Spark"
+echo "Stopping Spark"
 cd ${SPARK_INSTALL_DIR}
 sbin/stop-all.sh
 
-echo "Stop HDFS"
+echo "Stopping HDFS"
 cd ${HADOOP_INSTALL_DIR}
 sbin/stop-dfs.sh
 
