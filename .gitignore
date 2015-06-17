@@ -60,3 +60,5 @@ target/
 *.swp
 .vagrant
 installer/
+*.vdi
+

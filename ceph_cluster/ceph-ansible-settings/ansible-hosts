@@ -1,0 +1,20 @@
+# Dummy ansible host file
+# Used for syntax check by Travis
+# Before committing code please run: ansible-playbook --syntax-check site.yml -i dummy-ansible-hosts
+[mons]
+ceph-osd0
+ceph-osd1
+ceph-osd2
+
+[osds]
+ceph-osd0
+ceph-osd1
+ceph-osd2
+
+[mdss]
+ceph-osd0
+
+[rgws]
+
+[clients]
+

@@ -1,19 +1,22 @@
 #!/bin/sh
 
-NODE_HOSTNAME_PREFIX=$1 # example: ceph-osd
-NODE_IP_PREFIX=$2 # example: 192.168.33.10
-NODE_NUMBER=$3
-#CEPH_RELEASE=hammer
 
-sudo apt-get install -y python-pip python-dev git vim
-sudo pip install ansible
+NODE_ROLE=$1 # example: admin data client
+NODE_HOSTNAME_PREFIX=$2 # example: ceph-osd
+NODE_IP_PREFIX=$3 # example: 192.168.33.10
+NODE_NUMBER=$4
 
-#if [ ! -e /etc/apt/sources.list.d/ceph.list ] ; then
-#  echo "Installing ceph-deploy"
-#  wget -q -O- 'https://ceph.com/git/?p=ceph.git;a=blob_plain;f=keys/release.asc' | sudo apt-key add -
-#  echo "deb http://ceph.com/debian-${CEPH_RELEASE}/ $(lsb_release -sc) main" | sudo tee /etc/apt/sources.list.d/ceph.list
-#  sudo apt-get update && sudo apt-get install ceph-deploy
-#fi
+echo "Set up ${NODE_ROLE} node"
+
+if [ ${NODE_ROLE} = "admin" ]; then
+  sudo apt-get install -y python-pip python-dev git vim unzip
+  mkdir -p ~/.pip
+  cat << EOF > ~/.pip/pip.conf
+[global]
+index-url = http://mirrors.aliyun.com/pypi/simple/
+EOF
+  sudo pip install ansible
+fi
 
 if [ ! -e /etc/hosts.orig ]; then
   echo "Assign ${NODE_HOSTNAME_PREFIX}[0..${NODE_NUMBER}) in /etc/hosts"
@@ -37,22 +40,6 @@ if [ "$?" != "0" ]; then
   echo 'ceph_admin ALL=(ALL) NOPASSWD: ALL' | sudo tee /etc/sudoers.d/ceph_admin
   sudo chmod 0440 /etc/sudoers.d/ceph_admin
 fi
-
-#if [ ! -e /etc/security/limits.conf.orig ]; then
-#  echo "Increasing open file handle limit"
-#  sudo cp -a /etc/security/limits.conf /etc/security/limits.conf.orig
-#  sudo cat << EOF >> /etc/security/limits.conf
-#*               soft    nofile            32768
-#*               hard    nofile            65536
-#EOF
-#fi
-#
-#if [ ! -e /etc/sysctl.orig ]; then
-#  echo "Increase process limit"
-#  sudo cp -a /etc/sysctl.conf /etc/sysctl.conf.orig
-#  sudo echo "kernel.pid_max=4194303" >> /etc/sysctl.conf
-#  sudo sysctl -w kernel.pid_max=4194303
-#fi
 
 if [ ! -e /home/ceph_admin/.ssh/id_rsa ]; then
   echo 'Adding SSH key to "ceph_admin" user'
@@ -98,15 +85,29 @@ EOF
   sudo cp /home/ceph_admin/.ssh/id_rsa.pub /home/ceph_admin/.ssh/authorized_keys
   sudo chmod 0600 /home/ceph_admin/.ssh/authorized_keys
 
-  idx=0
-  while [ $idx -ne $NODE_NUMBER ]; do
-    sudo ssh-keyscan -H -t rsa ${NODE_HOSTNAME_PREFIX}${idx} >> /home/ceph_admin/.ssh/known_hosts
-    idx=$(( $idx + 1 ))
-  done
-  sudo chmod 0644 /home/ceph_admin/.ssh/known_hosts
+  if [ ${NODE_ROLE} = "admin" ]; then
+    idx=0
+    while [ $idx -ne $NODE_NUMBER ]; do
+      sudo ssh-keyscan -H -t rsa ${NODE_HOSTNAME_PREFIX}${idx} >> /home/ceph_admin/.ssh/known_hosts
+      idx=$(( $idx + 1 ))
+    done
+    sudo chmod 0644 /home/ceph_admin/.ssh/known_hosts
+  fi
 
   sudo chmod 0700 /home/ceph_admin/.ssh
   sudo chown ceph_admin:ceph_admin -R /home/ceph_admin/.ssh/
+fi
+
+if [ ${NODE_ROLE} = "admin" ]; then
+  cd /home/ceph_admin
+  if [ -e /vagrant/master.zip ]; then
+    sudo unzip -q /vagrant/master.zip
+  else
+    wget https://github.com/ceph/ceph-ansible/archive/master.zip
+    sudo unzip -q master.zip
+  fi
+  sudo cp -fr /vagrant/ansible/* /home/ceph_admin/ceph-ansible-master
+  sudo chown ceph_admin:ceph_admin -R /home/ceph_admin/ceph-ansible-master
 fi
 
 echo
