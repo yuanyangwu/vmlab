@@ -1,0 +1,55 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+SUBNET_PREFIX = '192.168.33'
+CEPH_CLIENT_NUMBER = 1
+CEPH_OSD_NUMBER = 3
+
+# in MB
+DISK_SIZE = 2048
+DISK_NUMBER = 2
+
+Vagrant.configure(2) do |config|
+  config.vm.box = "ubuntu.server1404.100g"
+  config.ssh.insert_key = false
+
+  (0..CEPH_CLIENT_NUMBER - 1).each do |i|
+    config.vm.define "ceph-client#{i}" do |client|
+      client.vm.hostname = "ceph-client#{i}"
+      client.vm.network :private_network, ip: "#{SUBNET}.4#{i}"
+      client.vm.provider :virtualbox do |vb|
+        vb.memory = "256"
+        vb.cpus = 1
+      end
+    end
+  end
+
+  (0..CEPH_OSD_NUMBER - 1).each do |i|
+    config.vm.define "ceph-osd#{i}" do |osd|
+      osd.vm.hostname = "ceph-osd#{i}"
+      osd.vm.network "private_network", ip: "#{SUBNET_PREFIX}.10#{i}"
+      osd.vm.network "private_network", ip: "#{SUBNET_PREFIX}.20#{i}"
+      osd.vm.provider "virtualbox" do |vb|
+        (0..DISK_NUMBER - 1).each do |d|
+          vb.customize ['createhd',
+                        '--filename', "disk-#{i}-#{d}",
+                        '--size', "#{DISK_SIZE}"]
+          vb.customize ['storageattach', :id,
+                        '--storagectl', 'SATA',
+                        '--port', 3 + d,
+                        '--device', 0,
+                        '--type', 'hdd',
+                        '--medium', "disk-#{i}-#{d}.vdi"]
+        end
+        vb.memory = "256"
+        vb.cpus = 1
+      end
+    end
+  end
+
+  config.vm.provision "shell" do |s|
+    s.path = "setup_ceph.sh"
+    s.args = ["ceph-osd", "#{SUBNET_PREFIX}.10", CEPH_OSD_NUMBER]
+  end
+end
+
