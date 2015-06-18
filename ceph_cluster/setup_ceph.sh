@@ -106,7 +106,8 @@ if [ ${NODE_ROLE} = "admin" ]; then
     wget https://github.com/ceph/ceph-ansible/archive/master.zip
     sudo unzip -q master.zip
   fi
-  sudo cp -fr /vagrant/ansible/* /home/ceph_admin/ceph-ansible-master
+  sudo cp -fr /vagrant/ceph-ansible-settings/* /home/ceph_admin/ceph-ansible-master
+  sudo chmod a-x /home/ceph_admin/ceph-ansible-master/ansible-hosts
   sudo chown ceph_admin:ceph_admin -R /home/ceph_admin/ceph-ansible-master
 fi
 
