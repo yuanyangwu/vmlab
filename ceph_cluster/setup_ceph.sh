@@ -2,11 +2,20 @@
 
 
 NODE_ROLE=$1 # example: admin data client
-NODE_HOSTNAME_PREFIX=$2 # example: ceph-osd
-NODE_IP_PREFIX=$3 # example: 192.168.33.10
-NODE_NUMBER=$4
+NODE_CLIENT_PREFIX=ceph-client
+NODE_CLIENT_IP_PREFIX=$2 # example: 192.168.33.4
+NODE_CLIENT_NUMBER=$3
+NODE_OSD_PREFIX=ceph-osd
+NODE_OSD_IP_PREFIX=$4 # example: 192.168.33.10
+NODE_OSD_NUMBER=$5
 
 echo "Set up ${NODE_ROLE} node"
+
+if [ ! -e /etc/apt/sources.list.vagrant ] ; then
+  echo 'configure ubuntu source'
+  sudo cp -a /etc/apt/sources.list /etc/apt/sources.list.vagrant
+  sudo sed 's;http.*com;http://mirrors.aliyun.com;' /etc/apt/sources.list.vagrant > /etc/apt/sources.list
+fi
 
 if [ ${NODE_ROLE} = "admin" ]; then
   sudo apt-get install -y python-pip python-dev git vim unzip
@@ -19,13 +28,21 @@ EOF
 fi
 
 if [ ! -e /etc/hosts.orig ]; then
-  echo "Assign ${NODE_HOSTNAME_PREFIX}[0..${NODE_NUMBER}) in /etc/hosts"
+  echo "Assign ${NODE_OSD_PREFIX}[0..${NODE_OSD_NUMBER}) in /etc/hosts"
   sudo cp -a /etc/hosts /etc/hosts.orig
   sudo cp -a /etc/hosts /etc/hosts.tmp
-  sudo grep -v "${NODE_HOSTNAME_PREFIX}" /etc/hosts > /etc/hosts.tmp
+
+  sudo grep -v "${NODE_CLIENT_PREFIX}" /etc/hosts > /etc/hosts.tmp
   idx=0
-  while [ $idx -ne $NODE_NUMBER ]; do
-    echo "${NODE_IP_PREFIX}${idx} ${NODE_HOSTNAME_PREFIX}${idx}" >> /etc/hosts.tmp
+  while [ $idx -ne $NODE_CLIENT_NUMBER ]; do
+    echo "${NODE_CLIENT_IP_PREFIX}${idx} ${NODE_CLIENT_PREFIX}${idx}" >> /etc/hosts.tmp
+    idx=$(( $idx + 1 ))
+  done
+
+  sudo grep -v "${NODE_OSD_PREFIX}" /etc/hosts > /etc/hosts.tmp
+  idx=0
+  while [ $idx -ne $NODE_OSD_NUMBER ]; do
+    echo "${NODE_OSD_IP_PREFIX}${idx} ${NODE_OSD_PREFIX}${idx}" >> /etc/hosts.tmp
     idx=$(( $idx + 1 ))
   done
   sudo mv /etc/hosts.tmp /etc/hosts
@@ -87,8 +104,8 @@ EOF
 
   if [ ${NODE_ROLE} = "admin" ]; then
     idx=0
-    while [ $idx -ne $NODE_NUMBER ]; do
-      sudo ssh-keyscan -H -t rsa ${NODE_HOSTNAME_PREFIX}${idx} >> /home/ceph_admin/.ssh/known_hosts
+    while [ $idx -ne $NODE_OSD_NUMBER ]; do
+      sudo ssh-keyscan -H -t rsa ${NODE_OSD_PREFIX}${idx} >> /home/ceph_admin/.ssh/known_hosts
       idx=$(( $idx + 1 ))
     done
     sudo chmod 0644 /home/ceph_admin/.ssh/known_hosts
@@ -111,6 +128,13 @@ if [ ${NODE_ROLE} = "admin" ]; then
   sudo chown ceph_admin:ceph_admin -R /home/ceph_admin/ceph-ansible-master
 fi
 
+if [ -d /vagrant/installer ]; then
+  echo "Install deb under installer/"
+  sudo dpkg -i /vagrant/installer/*.deb
+else
+  echo "No installer/ exists"
+fi
+
 echo
-echo 'Install ceph completed!'
+echo 'Install completed!'
 

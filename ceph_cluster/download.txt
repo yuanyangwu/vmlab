@@ -1,0 +1,5 @@
+installer
+http://kernel.ubuntu.com/~kernel-ppa/mainline/v3.16.6-utopic/linux-headers-3.16.6-031606-generic_3.16.6-031606.201410150635_amd64.deb
+http://kernel.ubuntu.com/~kernel-ppa/mainline/v3.16.6-utopic/linux-headers-3.16.6-031606_3.16.6-031606.201410150635_all.deb
+http://kernel.ubuntu.com/~kernel-ppa/mainline/v3.16.6-utopic/linux-image-3.16.6-031606-generic_3.16.6-031606.201410150635_amd64.deb
+https://github.com/ceph/ceph-ansible/archive/master.zip

@@ -4,12 +4,12 @@
 [mons]
 ceph-osd0
 ceph-osd1
-ceph-osd2
+#ceph-osd2
 
 [osds]
 ceph-osd0
 ceph-osd1
-ceph-osd2
+#ceph-osd2
 
 [mdss]
 ceph-osd0
@@ -17,4 +17,5 @@ ceph-osd0
 [rgws]
 
 [clients]
+ceph-client0
 

@@ -90,7 +90,7 @@ devices:
 
 raw_multi_journal: true
 raw_journal_devices:
-  - /dev/sdd
+#  - /dev/sdd
 #  - /dev/sdb
 #  - /dev/sdb
 #  - /dev/sdc
