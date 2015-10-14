@@ -1,0 +1,10 @@
+# Floating IP
+192.168.11.50 vip
+
+# Public Addresses
+192.168.11.51 server01
+192.168.11.52 server02
+
+# Private Addresses
+192.168.12.51 server01-private
+192.168.12.52 server02-private
