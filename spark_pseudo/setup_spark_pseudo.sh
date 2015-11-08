@@ -9,15 +9,19 @@ SPARK_WORKER_INSTANCES=${SPARK_WORKER_CORES}
 SPARK_WORKER_MEMORY=`expr ${NODE_MEMORY} - 1`
 JDK_INSTALLER=/installer/jdk-8u45-linux-x64.tar.gz
 JDK_INSTALL_DIR=/app/jdk1.8.0_45
-SCALA_INSTALLER=/installer/scala-2.10.5.tgz
-SCALA_INSTALL_DIR=/app/scala-2.10.5
-HADOOP_INSTALLER=/installer/hadoop-2.6.0.tar.gz
-HADOOP_INSTALL_DIR=/app/hadoop-2.6.0
-SPARK_INSTALLER=/installer/spark-1.3.1-bin-hadoop2.6.tgz
-SPARK_INSTALL_DIR=/app/spark-1.3.1
+SCALA_INSTALLER=/installer/scala-2.10.4.tgz
+SCALA_INSTALL_DIR=/app/scala-2.10.4
+HADOOP_INSTALLER=/installer/hadoop-2.6.2.tar.gz
+HADOOP_INSTALL_DIR=/app/hadoop-2.6.2
+SPARK_INSTALLER=/installer/spark-1.5.1-bin-hadoop2.6.tgz
+SPARK_INSTALL_DIR=/app/spark-1.5.1
 
-
-sudo apt-get install -y python-pip python-dev vim
+exist=`grep -e ubuntu /etc/os-release > /dev/null`
+if [ "$?" == "0" ]; then
+  sudo apt-get install -y python-pip python-dev vim
+else
+  sudo yum -y install python-pip python-dev vim
+fi
 
 if [ ! -e /etc/hosts.orig ]; then
   echo "Assign ${HADOOP_MASTER_HOSTNAME} IP in /etc/hosts"

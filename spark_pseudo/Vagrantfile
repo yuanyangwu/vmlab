@@ -7,7 +7,7 @@ servers = {
 }
 
 Vagrant.configure(2) do |config|
-  config.vm.box = "vm1" #"ubuntu.server1404.100g"
+  config.vm.box = "centos71" #"ubuntu.server1404.100g"
 
   servers.each do |server_name, server_ip|
     config.vm.define server_name do |server_config|
