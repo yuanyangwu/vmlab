@@ -1,0 +1,13 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+Vagrant.configure(2) do |config|
+  config.vm.box = "ubuntu.server1404"
+  config.ssh.insert_key = false
+  
+  config.vm.define "tomcat01" do |tomcat01|
+    tomcat01.vm.hostname = "tomcat01"
+    tomcat01.vm.provision :shell, path: "resources/setup.sh"
+  end
+end
+
