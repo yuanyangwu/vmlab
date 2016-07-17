@@ -1,0 +1,4 @@
+cluster.name: myelastic
+node.name: server03
+network.host: 192.168.11.63
+discovery.zen.ping.unicast.hosts: ["192.168.11.61", "192.168.11.62", "192.168.11.63"]
