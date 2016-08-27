@@ -1,6 +1,7 @@
 #!/bin/bash
 
-install -g root -o root -m 0644 /vagrant/resources/hosts /etc/hosts
+cat /vagrant/resources/hosts-default /vagrant/resources/hosts > /tmp/hosts
+install -g root -o root -m 0644 /tmp/hosts /etc/hosts
 
 #apt-get update
 #apt-get install -qqy apt-transport-https ca-certificates
@@ -17,8 +18,8 @@ usermod -aG docker vagrant
 echo 'DOCKER_OPTS="--insecure-registry dockerregistry:5000"' > /etc/default/docker
 service docker restart
 
-curl -sL https://github.com/docker/compose/releases/download/1.8.0/docker-compose-`uname -s`-`uname -m` > /usr/bin/docker-compose
-chmod a+x /usr/bin/docker-compose
+#curl -sL https://github.com/docker/compose/releases/download/1.8.0/docker-compose-`uname -s`-`uname -m` > /usr/bin/docker-compose
+#chmod a+x /usr/bin/docker-compose
 
 # install registry
 if [ "$(uname -n)" = "dockerregistry" ]; then

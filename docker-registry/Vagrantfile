@@ -5,16 +5,16 @@ Vagrant.configure(2) do |config|
   config.vm.box = "ubuntu.server1404"
   config.ssh.insert_key = false
   
-  config.vm.define "dockerregistry" do |dockerregistry|
-    dockerregistry.vm.hostname = "dockerregistry"
-    dockerregistry.vm.network :private_network, ip: "192.168.11.50"
-    dockerregistry.vm.provision :shell, path: "resources/setup.sh"
-  end
-
-  config.vm.define "server01" do |server01|
-    server01.vm.hostname = "server01"
-    server01.vm.network :private_network, ip: "192.168.11.51"
-    server01.vm.provision :shell, path: "resources/setup.sh"
+  File.open("resources/hosts", "r") do |file_handle|
+    count = file_handle.count
+    file_handle.rewind
+    file_handle.each_with_index do |server, index|
+      config.vm.define server.split(' ').last do |host|
+	    host.vm.hostname = server.split(' ')[1]
+        host.vm.network :private_network, ip: server.split(' ').first
+        host.vm.provision :shell, path: "resources/setup.sh"
+      end
+    end
   end
 end
 
