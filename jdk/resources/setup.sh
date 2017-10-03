@@ -13,6 +13,9 @@ sudo tar xzf ${JDK_INSTALLER} -C /app
 sudo chown root:root -R ${JDK_INSTALL_DIR}
 sudo tar xzf ${MVN_INSTALLER} -C /app
 sudo chown root:root -R ${MVN_INSTALL_DIR}
+mkdir -p /home/vagrant/.m2
+chown vagrant:vagrant -R /home/vagrant/.m2
+install -g vagrant -o vagrant -m 0644 /vagrant/resources/maven_settings.xml /home/vagrant/.m2/settings.xml
 sudo cat << EOF >> /etc/profile
 
 export JAVA_HOME=${JDK_INSTALL_DIR}
