@@ -1,0 +1,26 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+Vagrant.configure("2") do |config|
+  config.vm.box = "ubuntu/xenial64"
+  config.ssh.insert_key = false
+  config.vm.box_check_update = false
+  config.vm.provider "virtualbox" do |v|
+    v.memory = 8192
+    v.cpus = 2
+  end
+
+  config.vm.define "server01" do |server01|
+    server01.vm.hostname = "server01"
+    server01.vm.network :private_network, ip: "192.168.11.51"
+	#server01.vm.network "forwarded_port", guest: 8888, host: 8888
+  end
+
+  config.vm.provision "shell", inline: <<-SHELL
+    apt-get update
+    apt-get install -y ipython3-notebook python3-pip python3-dev python3-matplotlib
+    pip3 install tensorflow scipy sklearn
+    echo "launch ipython notebook via ipython3 notebook --ip 0.0.0.0 --notebook-dir=/vagrant"
+    echo "open http://192.168.11.51:8888 in browser"
+  SHELL
+end
