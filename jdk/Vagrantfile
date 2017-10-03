@@ -5,9 +5,9 @@ Vagrant.configure(2) do |config|
   config.vm.box = "ubuntu.server1404"
   config.ssh.insert_key = false
   
-  config.vm.define "jdk01" do |jdk01|
-    tomcat01.vm.hostname = "jdk01"
-    tomcat01.vm.provision :shell, path: "resources/setup.sh"
+  config.vm.define "server01" do |server01|
+    server01.vm.hostname = "server01"
+    server01.vm.provision :shell, path: "resources/setup.sh"
   end
 end
 
