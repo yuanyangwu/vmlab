@@ -63,3 +63,4 @@ installer/
 *.vdi
 master.zip
 tmp/
+code/
