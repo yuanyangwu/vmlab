@@ -14,7 +14,5 @@ EOF
 
 # Download kafka
 mkdir -p /home/vagrant/kafka
-cd /home/vagrant/kafka && wget https://mirrors.aliyun.com/apache/kafka/2.0.0/kafka_2.11-2.0.0.tgz
-/vagrant/resources/install_kafka.sh /home/vagrant/kafka/kafka_2.11-2.0.0.tgz
-
-exit 0 
+cd /home/vagrant/kafka && wget -q https://mirrors.aliyun.com/apache/kafka/2.0.0/kafka_2.11-2.0.0.tgz
+/vagrant/resources/install_kafka.sh /home/vagrant/kafka/kafka_2.11-2.0.0.tgz | tee /home/vagrant/usage.txt
