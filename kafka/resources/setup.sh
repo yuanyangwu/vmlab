@@ -12,7 +12,12 @@ export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
 export CLASSPATH=.:\${JAVA_HOME}/lib:\${JAVA_HOME}/lib/tools.jar
 EOF
 
-# Download kafka
+# Download Kafka
 mkdir -p /home/vagrant/kafka
 cd /home/vagrant/kafka && wget -q https://mirrors.aliyun.com/apache/kafka/2.0.0/kafka_2.11-2.0.0.tgz
 /vagrant/resources/install_kafka.sh /home/vagrant/kafka/kafka_2.11-2.0.0.tgz | tee /home/vagrant/usage.txt
+
+# Download Flink
+mkdir -p /home/vagrant/flink
+cd /home/vagrant/flink && wget -q https://mirrors.aliyun.com/apache/flink/flink-1.6.1/flink-1.6.1-bin-scala_2.11.tgz
+

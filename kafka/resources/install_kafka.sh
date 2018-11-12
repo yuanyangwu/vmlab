@@ -70,16 +70,16 @@ echo ""
 echo "Topic instructions
 
 # Create a topic
-bin/kafka-topics.sh --create --topic my_topic --zookeeper localhost:2181 --replication-factor 2 --partitions 3
+sudo bin/kafka-topics.sh --create --topic my_topic --zookeeper 192.168.11.60:2181 --replication-factor 2 --partitions 3
 
 # Show a topic
-bin/kafka-topics.sh --describe --topic my_topic --zookeeper localhost:2181
+sudo bin/kafka-topics.sh --describe --topic my_topic --zookeeper 192.168.11.60:2181
 
 # Write a topic
-bin/kafka-console-producer.sh --broker-list localhost:9092 --topic my_topic
+sudo bin/kafka-console-producer.sh --broker-list 192.168.11.60:9092 --topic my_topic
 msg 1
 msg 2
 
 # Read a topic
-bin/kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic my_topic --from-beginning
+sudo bin/kafka-console-consumer.sh --bootstrap-server 192.168.11.60:9092 --topic my_topic --from-beginning
 "
